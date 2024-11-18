@@ -1,104 +1,73 @@
 package main
 
-import "testing"
+import (
+	"fmt"
+	"testing"
 
-// using for benchmarks
-const largeNumber = 20
+	"github.com/stretchr/testify/assert"
+)
+
+var solvers = map[string]fibSolver{
+	"straightforward recursion": fib,
+	"with memoization":         fibDP,
+	"iterative bottom up":      fibIterativeBottomUp,
+}
 
 func TestFib(t *testing.T) {
 	testCases := []struct {
-		name      string
+		name   string
 		number int
 		expect int
 	}{
 		{
-			name: "case with 0 number",
+			name:   "0 number",
 			number: 0,
 			expect: 0,
 		},
 		{
-			name: "case with 1 number",
+			name:   "1 number",
 			number: 1,
 			expect: 1,
 		},
 		{
-			name: "case with 2 number",
+			name:   "2 number",
 			number: 2,
 			expect: 1,
 		},
 		{
-			name: "case with 3 number",
+			name:   "3 number",
 			number: 3,
 			expect: 2,
 		},
 		{
-			name: "case with large number",
+			name:   "large number",
 			number: 20,
 			expect: 6765,
 		},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			res := fib(tc.number)
-			if res != tc.expect {
-				t.Errorf("expect: %v, result: %v", tc.expect, res)
-			}
-		})
+	for solverName, solver := range solvers {
+		for _, tc := range testCases {
+			t.Run(solverName+"_"+tc.name, func(t *testing.T) {
+				t.Parallel()
+				result := solver(tc.number)
+				assert.Equal(t, tc.expect, result)
+			})
+		}
 	}
 }
 
 func BenchmarkFib(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		fib(largeNumber)
-	}
-}
-
-func TestFibDP(t *testing.T) {
-	testCases := []struct {
-		name      string
-		number int
-		expect int
-	}{
-		{
-			name: "case with 0 number",
-			number: 0,
-			expect: 0,
-		},
-		{
-			name: "case with 1 number",
-			number: 1,
-			expect: 1,
-		},
-		{
-			name: "case with 2 number",
-			number: 2,
-			expect: 1,
-		},
-		{
-			name: "case with 3 number",
-			number: 3,
-			expect: 2,
-		},
-		{
-			name: "case with large number",
-			number: 90,
-			expect: 2880067194370816120,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			res := fibDP(tc.number)
-			if res != tc.expect {
-				t.Errorf("expect: %v, result: %v", tc.expect, res)
+	numbers := []int{2, 5, 10, 20, 30, 40}
+	for _, number := range numbers {
+		b.Run(fmt.Sprintf("Number_%d", number), func(b *testing.B) {
+			for solverName, solver := range solvers {
+				b.Run(solverName, func(b *testing.B) {
+					for i := 0; i < b.N; i++ {
+						solver(number)
+					}
+				})
 			}
 		})
-	}
-}
-
-func BenchmarkFibDP(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		fibDP(largeNumber)
 	}
 }
