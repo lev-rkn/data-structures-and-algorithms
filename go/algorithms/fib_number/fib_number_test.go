@@ -1,4 +1,4 @@
-package main
+package fibnumber
 
 import (
 	"fmt"
@@ -7,10 +7,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var solvers = map[string]fibSolver{
-	"straightforward recursion": fib,
-	"with memoization":         fibDP,
-	"iterative bottom up":      fibIterativeBottomUp,
+var solvers = map[string]fibNumberSolver{
+	"recursive":           &recursiveSolver{},
+	"with memoization":    &memoSolver{memory: map[int]int{}},
+	"iterative bottom up": &bottomUpSolver{},
 }
 
 func TestFib(t *testing.T) {
@@ -50,7 +50,7 @@ func TestFib(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(solverName+"_"+tc.name, func(t *testing.T) {
 				t.Parallel()
-				result := solver(tc.number)
+				result := solver.solve(tc.number)
 				assert.Equal(t, tc.expect, result)
 			})
 		}
@@ -64,7 +64,7 @@ func BenchmarkFib(b *testing.B) {
 			for solverName, solver := range solvers {
 				b.Run(solverName, func(b *testing.B) {
 					for i := 0; i < b.N; i++ {
-						solver(number)
+						solver.solve(number)
 					}
 				})
 			}
